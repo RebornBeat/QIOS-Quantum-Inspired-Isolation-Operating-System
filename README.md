@@ -25,6 +25,21 @@ QIOS assumes a single trusted user with physical access to hardware. This assump
 - Multi-user isolation
 - Audit logging for compliance
 - Cryptographic inter-process communication
+- Behavioral obfuscation (RTRO not needed)
+
+### Why QIOS Does Not Need RTRO
+
+RTRO (Real-Time Resource Obfuscation) is designed to confuse external observers by randomizing reported metrics and obscuring container activity attribution. QIOS does not need RTRO because:
+
+**Single User:** There is no adversarial user trying to observe other users' behavior.
+
+**Air-Gapped:** There is no remote attacker observing the system.
+
+**Physical Security:** The threat model assumes physical access control prevents direct observation.
+
+**No Metadata Leakage Concern:** With a single trusted user, there is no need to obscure what the system is doing—the user already knows.
+
+RTRO would add overhead without providing security benefit in this threat model.
 
 ### Offline-First Architecture
 
@@ -34,18 +49,40 @@ QIOS is designed to operate without network connectivity:
 - Software loaded from local storage
 - Updates applied via physical media
 
-### Quantum-Like Computing Focus
+### Quantum-Like Computing Through Architecture
 
-QIOS is optimized for workloads that:
-- Require predictable timing
-- Benefit from temporal correlation
-- Use probabilistic computation models
-- Implement quantum-like algorithms
-- Perform temporal-analog processing
+QIOS enables quantum-like computation not by adding quantum-inspired features, but by implementing HIP's architectural principles:
+
+- **No global locks** enables parallel pathway exploration
+- **Event-driven coordination** enables temporal correlation
+- **Lightweight handshake communication** enables interference-free processing
+- **Non-deterministic scheduling** enables unpredictable but correct execution
+
+These are not additional features—they are the default behavior that emerges from eliminating traditional coordination mechanisms.
 
 ---
 
 ## Architecture: HIP Lightweight Handshake Mode
+
+### No Global Locks Architecture
+
+**Traditional OS:** Global locks serialize access to shared resources, forcing all computation through bottlenecks that create timing signals and limit parallelism.
+
+**QIOS:** No global locks anywhere in the system. Each component operates independently, coordinated only through event-driven channels. This enables true parallel execution without coordination overhead.
+
+### Lane-Based Execution
+
+**Container Level:**
+- Each container can have multiple parallel lanes
+- Each lane maintains independent execution state
+- Internal ordering private within each lane
+- No container serialization to single execution point
+
+**Kernel Level:**
+- Sees only current head events per active lane
+- Arbitrates across lanes using entropy-based selection
+- No knowledge of future events
+- No persistent ordering relationships
 
 ### Inter-Process Communication
 
@@ -53,7 +90,7 @@ QIOS implements HIP's lightweight handshake mode:
 
 **Channel Establishment:**
 1. Process A requests channel to Process B
-2. Kernel verifies both processes are within isolation boundary
+2. Kernel verifies both processes within isolation boundary
 3. Channel ID assigned
 4. Channel active - messages flow without per-message crypto
 
@@ -63,18 +100,18 @@ QIOS implements HIP's lightweight handshake mode:
 - Isolation boundaries prevent interference
 - Physical security prevents external observation
 
-### No Cryptographic Overhead
+### Event-Driven Coordination
 
-QIOS eliminates all cryptographic overhead:
-- No encrypted memory
-- No signed executables
-- No encrypted inter-process messages
-- No secure boot verification
+**No Time-Based Operations:**
+- No sleep() or timeout-based waiting
+- No timer-based scheduling
+- No time-based retry mechanisms
 
-Trust is established through:
-- Verified software sources
-- Physical security
-- Isolation boundaries
+**All Coordination Is Event-Based:**
+- Processes wait on events, not time
+- Retry triggers on resource availability events
+- Scheduling responds to execution completion events
+- All coordination through event chains
 
 ---
 
@@ -83,28 +120,28 @@ Trust is established through:
 ### Microkernel
 
 Minimal microkernel providing:
-- Memory management
-- Process scheduling
-- Inter-process communication
+- Memory management with isolation boundaries
+- Event-driven process scheduling
+- Lightweight handshake IPC
 - Hardware abstraction
 
 **Kernel Size Target:** < 100KB
 
 ### Memory Manager
 
-Simple memory management:
-- Flat address space per process
-- No virtual memory encryption
-- No per-page permissions (deferred)
-- Memory isolation through hardware boundaries
+Memory management optimized for quantum-like workloads:
+- Flat address space per process (no virtualization overhead)
+- Hardware memory protection via isolation boundaries
+- Predictable memory access timing
+- No memory encryption overhead
 
 ### Process Scheduler
 
 Event-driven, non-deterministic scheduling:
-- No fixed time slices
-- Entropy-based arbitration
-- Event-triggered execution
-- No observable timing patterns
+- No fixed time slices (eliminates timing signals)
+- Entropy-based arbitration (unpredictable but fair)
+- Event-triggered execution (no timer-based preemption)
+- Parallel lane support for multiple execution paths
 
 ### File System
 
@@ -254,6 +291,15 @@ QIOS does not implement:
 - Encryption
 - Secure boot
 
+### Why No Security Features
+
+Security features add overhead that degrades quantum-like computation performance. In QIOS's threat model (single trusted user, air-gapped, physical security), these features provide no benefit.
+
+Security is achieved through:
+- Physical access control
+- Verified software sources
+- Isolation architecture
+
 ### Appropriate Use Cases
 
 **Use QIOS When:**
@@ -317,6 +363,7 @@ Data from QIOS is trusted:
 - IPC message: < 1 microsecond
 - Context switch: < 10 microseconds
 - System call: < 5 microseconds
+- Event dispatch: < 2 microseconds
 
 ### Memory Overhead
 
@@ -327,37 +374,51 @@ Data from QIOS is trusted:
 
 QIOS provides highly predictable execution timing:
 - No background tasks
-- No interrupt storms
+- No interrupt storms (minimal interrupt use)
 - Minimal kernel involvement
 - User-controlled scheduling
+- Event-driven coordination
 
 ---
 
-## Quantum-Like Computing Features
+## Quantum-Like Computing: How Architecture Enables It
 
-### Temporal Pattern Support
+### The Four Properties, Achieved Through Architecture
 
-QIOS supports temporal processing:
-- High-resolution timers
-- Predictable scheduling
-- Correlation maintenance
-- Pattern detection
+**Parallel Pathway Maintenance:**
+- Lane-based architecture allows multiple execution lanes
+- No global locks prevent serialization
+- Event-driven coordination allows independent progress
+- Applications can explore multiple solution approaches simultaneously
 
-### Parallel State Processing
+**Interference-Free Processing:**
+- Isolation boundaries prevent cross-component interference
+- Lightweight handshake channels maintain coordination
+- No shared state means no interference patterns
+- Independent execution without coordination bottlenecks
 
-Support for quantum-like superposition:
-- Multiple execution paths
-- State branching
-- Collapse to result
-- Probability weighting
+**Event-Driven Temporal Coordination:**
+- All coordination through events, not time
+- Temporal correlation through event chains
+- No time-based signals leak timing information
+- Events at different times can be correlated logically
 
-### Uncertainty Representation
+**Non-Deterministic Execution:**
+- Entropy-based scheduling removes predictability
+- Fairness through probabilistic mechanisms
+- Unpredictable but correct computation
+- No deterministic patterns for attackers to exploit
 
-Native support for probabilistic data:
-- Confidence values
-- Distribution handling
-- Uncertainty propagation
-- Bayesian updates
+### No "Collapse" Required
+
+Unlike quantum computation that requires measurement-induced collapse of superposition states, QIOS's parallel pathways resolve through application logic:
+
+- Application controls when to coordinate results
+- No probabilistic collapse mechanics
+- No overhead of measurement
+- Deterministic resolution at application-defined points
+
+This eliminates the complexity and overhead that makes quantum computation impractical.
 
 ---
 
@@ -366,15 +427,19 @@ Native support for probabilistic data:
 | Feature | CIBOS | QIOS |
 |---------|-------|------|
 | Communication Mode | Cryptographic | Lightweight |
+| RTRO | Yes | No |
 | Multi-User | Yes | No |
 | Network Stack | Full | None |
 | Security Features | Complete | None |
 | Performance | Moderate | Maximum |
-| Quantum-Like Support | No | Yes |
+| Quantum-Like Support | Properties Present | Optimized |
 | Offline Optimized | No | Yes |
 | User Interface | Full (CLI/GUI/Mobile) | CLI Only |
 | Boot Time | ~5s | <2s |
 | Memory Usage | High | Minimal |
+| Global Locks | No | No |
+| Event-Driven | Yes | Yes |
+| Lane Architecture | Yes | Yes |
 
 ---
 
@@ -386,6 +451,7 @@ Native support for probabilistic data:
 - Temporal processing research
 - Probabilistic computing experiments
 - Performance benchmarking
+- Architecture research
 
 ### Air-Gapped Systems
 
@@ -415,9 +481,10 @@ Native support for probabilistic data:
 ### Phase 1: Core System (Months 1-6)
 
 - Microkernel implementation
-- Memory management
-- Process scheduling
+- Memory management with isolation
+- Event-driven process scheduling
 - Basic CLI
+- Lane-based execution support
 
 ### Phase 2: Hardware Support (Months 4-9)
 
@@ -426,11 +493,11 @@ Native support for probabilistic data:
 - RISC-V support
 - Driver framework
 
-### Phase 3: Quantum-Like Features (Months 7-12)
+### Phase 3: Quantum-Like Optimization (Months 7-12)
 
+- Event coordination optimization
+- Parallel pathway support
 - Temporal processing support
-- Parallel state handling
-- Uncertainty representation
 - Performance optimization
 
 ### Phase 4: Ecosystem (Months 10-18)
