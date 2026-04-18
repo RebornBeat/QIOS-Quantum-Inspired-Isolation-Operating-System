@@ -3,266 +3,185 @@
 
 ## Overview
 
-The Quantum-Inspired Isolation Operating System (QIOS) is a lightweight operating system designed for quantum-like classical computing workloads. Implementing HIP's lightweight handshake communication mode, QIOS provides maximum performance for temporal-analog and quantum-inspired computational paradigms.
+The Quantum-Inspired Isolation Operating System (QIOS) is a lightweight operating system that implements the Hybrid Isolation Paradigm's lightweight handshake communication mode to deliver maximum performance for quantum-like classical computation. QIOS eliminates global locks, cryptographic overhead, behavioral obfuscation overhead, and multi-user complexity to provide a clean, high-performance environment for parallel lane-based computation in air-gapped, single-user, physically secured contexts.
 
-QIOS is optimized for:
-- Offline and air-gapped computing
-- Single-user operation
-- Quantum-like algorithm execution
-- Temporal pattern processing
-- Research and development
-- Performance-critical applications
+QIOS runs on top of QIBIOS. The isolation foundation is established by QIBIOS before QIOS begins execution. QIOS inherits hardware-established isolation boundaries and event-driven initialization state, then builds the execution environment and lane-based scheduling on top of that foundation. Both systems implement HIP's isolation principles in the lightweight handshake mode.
+
+QIOS is not a simplified or incomplete operating system. It is a focused operating system designed for a specific class of computation and deployment context. Its minimalism is a feature, not a limitation. By eliminating everything not required for its target use case, QIOS achieves performance characteristics that are not possible in general-purpose systems that carry overhead for use cases that are irrelevant in the air-gapped single-user context.
 
 ---
 
 ## Design Philosophy
 
-### Single User, Maximum Performance
+### Correct Threat Modeling as the Foundation
 
-QIOS assumes a single trusted user with physical access to hardware. This assumption eliminates:
-- User authentication overhead
-- Permission checking
-- Multi-user isolation
-- Audit logging for compliance
-- Cryptographic inter-process communication
-- Behavioral obfuscation (RTRO not needed)
+QIOS design begins with an honest threat model. The system operates in an air-gapped, single-user, physically secured environment. In this context:
 
-### Why QIOS Does Not Need RTRO
+- There is no remote adversary to observe timing signals
+- There is no second user whose behavior must be hidden from the first
+- Behavioral obfuscation confuses no one because there is no observer
+- Cryptographic verification chains protect against no threat that physical security does not already address
 
-RTRO (Real-Time Resource Obfuscation) is designed to confuse external observers by randomizing reported metrics and obscuring container activity attribution. QIOS does not need RTRO because:
+Starting from this threat model, RTRO is correctly identified as unnecessary. Cryptographic inter-process communication is correctly identified as unnecessary. Multi-user profile isolation is correctly identified as unnecessary. Each of these would add overhead without providing security benefit in this environment.
 
-**Single User:** There is no adversarial user trying to observe other users' behavior.
+### Maximum Performance for Parallel Lane Computation
 
-**Air-Gapped:** There is no remote attacker observing the system.
+QIOS is optimized for workloads that use multiple parallel lanes to explore solution spaces, process temporal patterns, maintain multiple computational pathways simultaneously, and coordinate results through event chains. These workloads benefit directly from the absence of global locks, the absence of coordination overhead, and the event-driven nature of the kernel.
 
-**Physical Security:** The threat model assumes physical access control prevents direct observation.
+### HIP's Lane Architecture as the Core Execution Model
 
-**No Metadata Leakage Concern:** With a single trusted user, there is no need to obscure what the system is doing—the user already knows.
-
-RTRO would add overhead without providing security benefit in this threat model.
-
-### Offline-First Architecture
-
-QIOS is designed to operate without network connectivity:
-- No network stack required
-- No remote access features
-- Software loaded from local storage
-- Updates applied via physical media
-
-### Quantum-Like Computing Through Architecture
-
-QIOS enables quantum-like computation not by adding quantum-inspired features, but by implementing HIP's architectural principles:
-
-- **No global locks** enables parallel pathway exploration
-- **Event-driven coordination** enables temporal correlation
-- **Lightweight handshake communication** enables interference-free processing
-- **Non-deterministic scheduling** enables unpredictable but correct execution
-
-These are not additional features—they are the default behavior that emerges from eliminating traditional coordination mechanisms.
+The lane architecture described in HIP is not a secondary feature of QIOS. It is the primary execution model. QIOS implements lane creation, lane-based scheduling, event-driven coordination, and entropy-based arbitration as first-class kernel capabilities because these are the mechanisms that enable quantum-like computational properties.
 
 ---
 
-## Architecture: HIP Lightweight Handshake Mode
+## How QIOS Implements Quantum-Like Properties Through Architecture
 
-### No Global Locks Architecture
+The quantum-like properties that QIOS provides are not added features. They emerge from architectural decisions that remove coordination mechanisms. This distinction matters: adding quantum-like features would add overhead; removing coordination mechanisms removes overhead and creates conditions for quantum-like behavior as a natural consequence.
 
-**Traditional OS:** Global locks serialize access to shared resources, forcing all computation through bottlenecks that create timing signals and limit parallelism.
+### No Global Locks Enables Parallel Pathway Maintenance
 
-**QIOS:** No global locks anywhere in the system. Each component operates independently, coordinated only through event-driven channels. This enables true parallel execution without coordination overhead.
+Traditional operating systems serialize access to shared resources through global locks. This serialization prevents multiple solution approaches from proceeding simultaneously when they would otherwise be independent. A lock acquired for one computation delays another computation even when they have no actual data dependency.
 
-### Lane-Based Execution
+QIOS eliminates global locks across the entire kernel. Components do not wait on each other through lock mechanisms. Components proceed independently within their isolation boundaries. Multiple parallel lanes can each pursue distinct computational approaches simultaneously without creating overhead for each other. This is parallel pathway maintenance without the serialization cost that traditional systems impose.
 
-**Container Level:**
-- Each container can have multiple parallel lanes
-- Each lane maintains independent execution state
-- Internal ordering private within each lane
-- No container serialization to single execution point
+### Isolation Boundaries Enable Interference-Free Processing
 
-**Kernel Level:**
-- Sees only current head events per active lane
-- Arbitrates across lanes using entropy-based selection
-- No knowledge of future events
-- No persistent ordering relationships
+Traditional operating systems allow components to interfere with each other through shared state, shared cache pressure, and coordination overhead. Even when components do not intentionally share data, they compete for the same hardware resources through mechanisms that create interference.
 
-### Inter-Process Communication
+QIOS establishes hardware isolation boundaries between lanes and between containers. Components within their isolation boundaries cannot interfere with each other through software mechanisms. Cache effects remain at the hardware level, but software-visible interference is eliminated by architecture. Multiple lanes can process independent aspects of a problem without their progress affecting each other through coordination mechanisms. This is interference-free processing within the software isolation model.
 
-QIOS implements HIP's lightweight handshake mode:
+### Event-Driven Kernel Coordination Enables Temporal Correlation
 
-**Channel Establishment:**
-1. Process A requests channel to Process B
-2. Kernel verifies both processes within isolation boundary
-3. Channel ID assigned
-4. Channel active - messages flow without per-message crypto
+Traditional operating systems use time-based coordination at the kernel level—time-sliced preemption, time-based fairness, time-based backoff. These mechanisms introduce time as a coordination variable in the kernel, which creates artificial temporal relationships between computations that have no natural temporal dependency.
 
-**Message Flow:**
-- Messages tagged with channel ID
-- No signatures, no encryption
-- Isolation boundaries prevent interference
-- Physical security prevents external observation
+QIOS's kernel makes no time-based coordination decisions. The kernel selects among ready events using entropy-based arbitration. Events have natural temporal relationships when they are causally related, and no artificial temporal relationships otherwise. Applications can establish temporal correlations through event chains that reflect actual computational dependencies rather than scheduling artifacts. This enables temporal correlation that represents the computation, not the operating system's coordination mechanisms.
 
-### Event-Driven Coordination
+### Entropy-Based Arbitration Enables Non-Deterministic Correct Execution
 
-**No Time-Based Operations:**
-- No sleep() or timeout-based waiting
-- No timer-based scheduling
-- No time-based retry mechanisms
+Traditional operating systems use deterministic scheduling—FIFO queues, priority queues, round-robin assignment. These mechanisms create predictable execution patterns. Predictable patterns limit the exploration of solution spaces because the same computation always explores the same sequence.
 
-**All Coordination Is Event-Based:**
-- Processes wait on events, not time
-- Retry triggers on resource availability events
-- Scheduling responds to execution completion events
-- All coordination through event chains
+QIOS uses entropy-based arbitration for kernel scheduling decisions. Among ready events, the kernel selects using cryptographic entropy. The result is unpredictable but always correct: the kernel only selects among events that are valid for execution, so correctness is preserved regardless of selection order. Applications that use parallel lanes to explore solution spaces can proceed in any order without affecting correctness, while the unpredictable order prevents any single exploration sequence from being privileged.
+
+### No Collapse Required: Application-Controlled Resolution
+
+Quantum computing requires measurement-induced collapse. This is physics-imposed, destructive, loses all information about non-selected states, and forces statistical reconstruction through repeated runs. The overhead is fundamental.
+
+QIOS parallel pathways do not collapse. Lanes complete when their computation finishes. All lane results are available to the application. The application decides when to examine results and how to combine them. One run provides all results. No statistical reconstruction is required. The application controls resolution with full information.
+
+This is categorically superior to quantum collapse for practical computation:
+- No repeated runs required
+- No information loss from collapse
+- No physics-imposed timing constraints
+- No decoherence limitations
+- Application logic controls when and how results are combined
 
 ---
 
-## Core Components
+## Architecture: The Kernel Design
 
-### Microkernel
+### No Global Locks in the Kernel
 
-Minimal microkernel providing:
-- Memory management with isolation boundaries
-- Event-driven process scheduling
-- Lightweight handshake IPC
-- Hardware abstraction
+This is not a configuration option. The QIOS kernel contains no global locks. Resource arbitration is event-driven. Contention is resolved through stall-and-event mechanisms, not through lock acquisition. When a resource is unavailable, the requesting lane stalls without spinning. When the resource becomes available, the kernel emits an event and selects from stalled lanes using entropy-based arbitration.
 
-**Kernel Size Target:** < 100KB
+### Lane-Based Execution Model
 
-### Memory Manager
+**What a Lane Is:**
+A lane is an isolated execution context with a dedicated memory region, an independent event queue, coordination only through established channels, and no shared state with other lanes. Lanes are not threads in the traditional sense. Threads share memory and coordinate through mutexes. Lanes have independent memory and coordinate through events.
 
-Memory management optimized for quantum-like workloads:
-- Flat address space per process (no virtualization overhead)
-- Hardware memory protection via isolation boundaries
-- Predictable memory access timing
-- No memory encryption overhead
+**What Multiple Lanes Enable:**
+An application that needs to explore multiple solution approaches creates multiple lanes, assigns one approach to each lane, and allows all lanes to execute simultaneously. The kernel sees only the head event of each lane. It does not know what computation each lane is performing, how much work each lane has queued, or how the lanes are related. The application has complete control over lane creation, lane coordination through channels, and lane result collection.
 
-### Process Scheduler
+**Kernel View:**
+The kernel is architecturally constrained to see only the current head event of each active lane. This constraint is not configurable. The kernel does not see queue depth, does not see events behind the head, does not see lane relationships, does not see future events. This ensures the kernel cannot be used to infer system state. The kernel selects among head events using entropy.
 
-Event-driven, non-deterministic scheduling:
-- No fixed time slices (eliminates timing signals)
-- Entropy-based arbitration (unpredictable but fair)
-- Event-triggered execution (no timer-based preemption)
-- Parallel lane support for multiple execution paths
+**Ephemeral Ordering:**
+The kernel maintains no persistent ordering of lanes or events. The selection made in one scheduling cycle does not influence the next. Each cycle is independent. This prevents any ordering pattern from emerging in kernel behavior that could constrain or predict computational exploration.
 
-### File System
+### Event-Driven Kernel Loop
 
-Minimal file system support:
-- Read-only root filesystem
-- Writable application storage
-- No file encryption
-- No access control lists
+The kernel loop continuously checks all event sources, collects ready events, and delivers one event per cycle selected by entropy. If no events are ready, the kernel idles. This loop is the only coordination mechanism in the kernel.
+
+Time is one event source among many. Applications may request timer events—wake me after this duration, signal me periodically, expire this operation after this timeout. These requests create timer entries in the kernel's timer queue. When a timer fires, its event is added to the ready event pool. The kernel treats timer events exactly like any other event: it may or may not select a timer event in any given cycle based on entropy among all ready events.
+
+**The critical distinction:** The kernel checks whether timers have fired as part of collecting ready events. The kernel does not use time to make its coordination decisions. Time generates events; entropy selects events. This is the event-driven architecture.
+
+### Channel Communication: Lightweight Handshake
+
+Applications create channels to communicate with other applications. Channel creation establishes the relationship through a lightweight handshake at the kernel level. Once the handshake is complete, messages flow on the channel without per-message cryptographic verification. The isolation boundaries prevent injection of messages into channels from outside the established relationship. Physical security prevents external observation of channel content.
+
+Applications may request channel creation to other containers or to other lanes within their own container. Both are valid. The channel abstraction is uniform.
 
 ---
 
-## User Interface
+## Application Execution Model
 
-### Command Line Interface
+### Multiple Applications, True Parallel Execution
 
-QIOS provides a text-based command line:
-- Serial console output
-- VGA text mode
-- Basic shell commands
-- Script execution
-- Direct code execution
+QIOS supports multiple applications running simultaneously. Single-user does not mean single application. A single trusted user may run many applications simultaneously, each in its own container with its own lanes.
 
-### No Graphical Interface
+**Single-User Means:**
+- One user is trusted and has physical access
+- No access control between the user's own applications is needed
+- No behavioral obfuscation is needed because there is no adversary
 
-QIOS does not include graphical user interface:
-- No windowing system
-- No graphics drivers
-- No GUI applications
+**Single-User Does Not Mean:**
+- Only one application may run
+- Applications cannot run concurrently
+- Multiple parallel workloads are prohibited
 
-Focus on computational performance, not user experience.
+### Application Structure
 
----
+An application consists of one or more containers. Each container can have multiple lanes. Each lane is an independent execution context. Lanes within a container can communicate through channels. Applications coordinate with each other through channels between containers.
 
-## Software Distribution
+### How Quantum-Like Workloads Use This Structure
 
-### Loading Methods
+A quantum-like optimization application might create multiple lanes, each implementing a different search strategy. All lanes execute simultaneously without interfering with each other. The application collects results from all lanes when they complete. The application selects the best result. No repeated runs are required. No information is lost.
 
-**USB Storage:**
-- Primary software distribution method
-- Verified USB media trusted
-- No signature verification
-- Direct executable loading
+A probabilistic inference application might maintain multiple hypothesis lanes simultaneously. Each lane computes the likelihood of one hypothesis given observed evidence. All lanes proceed in parallel. The application combines results with appropriate weights. All information from all hypotheses is preserved in one run.
 
-**Direct Code Entry:**
-- Type or paste code directly
-- Immediate execution
-- Development workflow support
+A temporal pattern processing application might maintain lanes processing different temporal scales simultaneously. Events at different temporal resolutions are processed in parallel without the serialization that traditional scheduling would impose.
 
-**Local Storage:**
-- Persistent application storage
-- No installation process
-- Copy executable, run
-
-### No Package Manager
-
-QIOS does not include package management:
-- No dependency resolution
-- No version management
-- No update mechanism
-
-Software is:
-- Self-contained executables
-- Statically linked
-- No shared libraries
+These are not contrived examples. They are direct applications of the lane architecture to problems that traditional systems handle poorly because global locks and deterministic scheduling force serialization onto inherently parallel problems.
 
 ---
 
-## Application Model
+## Application-Level Time
 
-### Single Application Focus
+### Time Is Available at the Application Level
 
-QIOS is optimized for running one primary application at a time:
-- Application has full system resources
-- No background processes
-- No daemon services
-- No system services competing for resources
+Applications may use time operations. Sleep for a duration. Set a timeout. Perform periodic operations. Implement rate limiting. Use time-based logic. All of these are supported and appropriate.
 
-### Application Responsibilities
+The kernel provides timer events as one event source. Applications request timer events through the standard event interface. When the specified duration expires, the kernel adds a timer event to the ready pool for that application's lane. The kernel treats this timer event like any other ready event: it is subject to entropy-based selection from among all ready events.
 
-Applications must handle:
-- All I/O directly
-- Hardware access
-- Error handling
-- Resource cleanup
+### Why This Is Not a Security Concern
 
-### No System Services
+In environments with adversaries, application-level timing can create observable patterns that leak information. QIOS does not have adversaries in its deployment context. There is no one to observe timing patterns. Application-level time use is not a security concern in the air-gapped, single-user environment.
 
-QIOS provides minimal system services:
-- No init system
-- No logging daemon
-- No network services
-- No background tasks
+### What Is Not Available at the Kernel Level
+
+The kernel does not use time to make coordination decisions. The kernel does not preempt based on time quanta. The kernel does not implement time-based fairness. The kernel does not use time-based backoff. These kernel-level time-based coordination mechanisms are absent because they introduce artificial temporal structure into kernel decisions that QIOS's architecture removes.
 
 ---
 
-## Development Environment
+## No RTRO Required
 
-### Built-In Tools
+RTRO is a behavioral obfuscation layer designed to confuse adversarial observers by randomizing reported metrics and obscuring container activity attribution. QIOS does not include RTRO.
 
-QIOS includes minimal development tools:
-- Text editor
-- Code interpreter
-- Debug output
-- Memory inspector
+**Why RTRO Is Absent:**
+An adversary must exist to be confused. QIOS operates in single-user, air-gapped, physically secured environments. No adversary observes the system. RTRO would add overhead without providing security benefit. Maximum performance for computational workloads is the goal. Removing RTRO overhead is correct.
 
-### External Development
+**What Replaces RTRO's Security Role:**
+In CIBOS, RTRO hides behavioral signals from potential adversaries in multi-user networked environments. In QIOS, physical security provides the outer protection layer. The user already knows what the system is doing. There is nothing to hide.
 
-For complex development:
-- Develop on external system
-- Transfer executable to QIOS
-- Execute on QIOS
+---
 
-### Supported Languages
+## User Interface: Command Line Only
 
-**Direct Execution:**
-- Assembly
-- Machine code
+QIOS provides a text-based command line interface. Serial console output and VGA text mode are supported. No graphical interface is included because graphical interface infrastructure would add overhead not relevant to computational workloads.
 
-**Interpreter Support:**
-- Custom interpreters can be loaded
-- No built-in high-level language support
+The command line supports launching applications, loading software from local storage or USB, basic system inspection, script execution, and direct code entry. The focus is on computational capability, not user experience refinement.
+
+Software may be loaded from USB storage or other attached storage media. The system does not require network connectivity for software loading. Applications are self-contained executables that are copied to local storage or run directly from removable media.
 
 ---
 
@@ -270,288 +189,148 @@ For complex development:
 
 ### Trust Assumptions
 
-**Trusted:**
-- Boot media source
-- Hardware platform
-- Physical environment
-- Single user
+**Trusted:** Boot media from a verified physical source, hardware platform, physical environment, single user with physical access.
 
-**Not Addressed:**
-- Network attacks (no network)
-- Multi-user isolation (single user)
-- Insider threats (trusted user)
-- Physical attacks (physical security)
+**Not Addressed:** Network attacks (system is air-gapped), multi-user isolation (single user), adversarial observers (none in scope), remote exploitation (no network).
 
-### No Security Features
+### No Security Overhead Features
 
-QIOS does not implement:
-- User authentication
-- Access control
-- Audit logging
-- Encryption
-- Secure boot
+QIOS does not implement user authentication, access control lists, audit logging for compliance, encryption, or behavioral obfuscation. These features protect against threats that do not exist in the target environment. Removing them removes overhead and provides correct security for the actual threat model.
 
-### Why No Security Features
+### What Provides Security
 
-Security features add overhead that degrades quantum-like computation performance. In QIOS's threat model (single trusted user, air-gapped, physical security), these features provide no benefit.
-
-Security is achieved through:
-- Physical access control
-- Verified software sources
-- Isolation architecture
+Physical access control ensures only the trusted user can interact with the system. Verified software sources ensure applications are from trusted origins. Isolation architecture ensures applications cannot interfere with each other or with the kernel, protecting computational integrity even without adversarial external threats.
 
 ### Appropriate Use Cases
 
-**Use QIOS When:**
-- System is air-gapped
-- Physical security is assured
-- Single trusted user
-- Performance is critical
-- Quantum-like workloads
+**Use QIOS for:**
+- Air-gapped research and computation systems
+- Quantum-like algorithm development and testing
+- Parallel computation research
+- Single-user offline computation requiring maximum performance
+- Experimental computing platforms
 
-**Do Not Use QIOS When:**
-- Network connectivity exists
-- Multiple users
-- Sensitive data processed
-- Compliance requirements
-- Adversarial environment
-
----
-
-## Communication with CIBOS
-
-### Offline Data Transfer
-
-QIOS can exchange data with CIBOS systems:
-
-**USB Transfer:**
-1. Prepare data on QIOS
-2. Write to USB media
-3. Transfer USB to CIBOS
-4. CIBOS reads data
-
-**Serial Transfer:**
-- Direct serial connection
-- Point-to-point communication
-- No network stack needed
-
-### Data Format
-
-Standard data formats:
-- Binary blobs
-- Text files
-- No encryption required
-
-### Trust Model
-
-Data from QIOS is trusted:
-- No signature verification
-- No integrity checking
-- Relies on physical security
+**Do Not Use QIOS for:**
+- Networked systems of any kind
+- Multi-user systems
+- Systems processing data in adversarial environments
+- Systems without physical security
 
 ---
 
-## Performance Characteristics
+## Offline Communication with Other Systems
 
-### Boot Time
+QIOS can exchange information with other systems through physical media. Data prepared on QIOS can be written to USB media, transferred physically, and read by another system. Data from another system can be brought to QIOS through the same physical transfer mechanism.
 
-- QIBIOS to QIOS shell: < 2 seconds
-- Application ready: < 5 seconds
-
-### Execution Overhead
-
-- IPC message: < 1 microsecond
-- Context switch: < 10 microseconds
-- System call: < 5 microseconds
-- Event dispatch: < 2 microseconds
-
-### Memory Overhead
-
-- Kernel: < 1MB
-- Per-process: < 100KB
-
-### Predictable Timing
-
-QIOS provides highly predictable execution timing:
-- No background tasks
-- No interrupt storms (minimal interrupt use)
-- Minimal kernel involvement
-- User-controlled scheduling
-- Event-driven coordination
+QIOS does not implement network-based communication. The offline data transfer model is intentional. Network communication would introduce network coordination overhead inconsistent with the design philosophy and would introduce the network attack surface that the air-gapped deployment context eliminates.
 
 ---
 
-## Quantum-Like Computing: How Architecture Enables It
+## Minimum Hardware Requirements
 
-### The Four Properties, Achieved Through Architecture
+QIOS is a lightweight operating system. It runs on modest hardware.
 
-**Parallel Pathway Maintenance:**
-- Lane-based architecture allows multiple execution lanes
-- No global locks prevent serialization
-- Event-driven coordination allows independent progress
-- Applications can explore multiple solution approaches simultaneously
+**Minimum Requirements:**
+- Any 64-bit processor (x86_64, ARM64, or RISC-V RV64GC)
+- 32MB RAM
+- Any bootable storage medium
+- Serial or VGA output
 
-**Interference-Free Processing:**
-- Isolation boundaries prevent cross-component interference
-- Lightweight handshake channels maintain coordination
-- No shared state means no interference patterns
-- Independent execution without coordination bottlenecks
+**Recommended for Quantum-Like Workloads:**
+- Modern 64-bit processor with hardware memory isolation support
+- 128MB or more RAM for meaningful parallel lane workloads
+- Fast storage for quick application loading
+- Minimal interrupt sources for predictable execution timing
 
-**Event-Driven Temporal Coordination:**
-- All coordination through events, not time
-- Temporal correlation through event chains
-- No time-based signals leak timing information
-- Events at different times can be correlated logically
-
-**Non-Deterministic Execution:**
-- Entropy-based scheduling removes predictability
-- Fairness through probabilistic mechanisms
-- Unpredictable but correct computation
-- No deterministic patterns for attackers to exploit
-
-### No "Collapse" Required
-
-Unlike quantum computation that requires measurement-induced collapse of superposition states, QIOS's parallel pathways resolve through application logic:
-
-- Application controls when to coordinate results
-- No probabilistic collapse mechanics
-- No overhead of measurement
-- Deterministic resolution at application-defined points
-
-This eliminates the complexity and overhead that makes quantum computation impractical.
+**Note on Requirements:** The minimum requirements reflect QIOS's lightweight nature. The recommended specifications for quantum-like workloads reflect the needs of the workload, not of QIOS itself. A workload that maintains many parallel lanes simultaneously benefits from more RAM. QIOS overhead is minimal regardless of available hardware.
 
 ---
 
 ## Comparison: QIOS vs CIBOS
 
 | Feature | CIBOS | QIOS |
-|---------|-------|------|
-| Communication Mode | Cryptographic | Lightweight |
+|---|---|---|
+| Communication Mode | Cryptographic | Lightweight Handshake |
 | RTRO | Yes | No |
 | Multi-User | Yes | No |
 | Network Stack | Full | None |
-| Security Features | Complete | None |
-| Performance | Moderate | Maximum |
-| Quantum-Like Support | Properties Present | Optimized |
-| Offline Optimized | No | Yes |
-| User Interface | Full (CLI/GUI/Mobile) | CLI Only |
-| Boot Time | ~5s | <2s |
-| Memory Usage | High | Minimal |
-| Global Locks | No | No |
-| Event-Driven | Yes | Yes |
+| Security Features | Comprehensive cryptographic | Physical boundary |
+| Performance Focus | Balanced | Maximum |
+| Global Locks | None | None |
 | Lane Architecture | Yes | Yes |
+| Event-Driven Kernel | Yes | Yes |
+| Entropy-Based Arbitration | Yes | Yes |
+| Application-Level Time | Yes | Yes |
+| Kernel-Level Time Coordination | No | No |
+| Platform Variants | CLI, GUI, Mobile | CLI Only |
+| Multiple Applications | Yes | Yes |
+| Parallel Lanes per Application | Yes | Yes |
+| HIP Mode | Cryptographic | Lightweight Handshake |
+| Use Case | Multi-user, networked, general | Single-user, air-gapped, quantum-like |
 
 ---
 
-## Use Cases
+## Implementation Language and Evolution Path
 
-### Research Computing
+### Current Implementation in Rust
 
-- Quantum-like algorithm development
-- Temporal processing research
-- Probabilistic computing experiments
-- Performance benchmarking
-- Architecture research
+QIOS is implemented in Rust targeting binary processor architectures. Rust provides memory safety without garbage collection, zero-cost abstractions for performance-critical kernel code, minimal runtime appropriate for kernel-level software, and strong support across x86_64, ARM64, and RISC-V.
 
-### Air-Gapped Systems
+### Transition to Non-Binary Computation
 
-- Secure offline computing
-- Data analysis without network exposure
-- Sensitive computation
-- Isolated processing
+QIOS's architectural principles do not require binary computation. The lane architecture, event-driven coordination, entropy-based arbitration, and lightweight handshake communication remain valid on non-binary substrates. When non-binary hardware becomes practical:
 
-### Development Platforms
+- Lane architecture maps to parallel processing pathways in the native substrate
+- Event-driven coordination maps to substrate-native event mechanisms
+- Isolation boundaries map to substrate-specific protection mechanisms
+- Entropy-based arbitration maps to substrate-provided randomness
 
-- OS development
-- Algorithm testing
-- Hardware experimentation
-- Performance optimization
+**The Particular Relevance to Quantum-Like Computation:**
+Non-binary substrates—whether analog, event-analog, or other designs—may provide natural hardware implementations of properties that QIOS currently implements in software. Parallel pathway maintenance, interference-free processing, and temporal correlation may have more direct substrate expressions in non-binary hardware than in binary hardware. QIOS's architecture is designed to take advantage of these substrate properties when they become available.
 
-### Embedded Quantum-Like Systems
-
-- Temporal signal processing
-- Pattern recognition
-- Probabilistic inference
-- Real-time temporal analysis
+**Language Evolution:**
+Non-binary substrates will likely require programming languages designed for their execution models. Research into non-binary programming paradigms, hardware description languages for non-binary processors, and transition pathways from current binary Rust implementations represents a future development area. QIOS's architectural principles provide the design foundation that any appropriate language would need to implement for quantum-like computing.
 
 ---
 
 ## Implementation Roadmap
 
-### Phase 1: Core System (Months 1-6)
+### Phase 1: Core System Implementation (Months 1 to 6)
 
-- Microkernel implementation
-- Memory management with isolation
-- Event-driven process scheduling
-- Basic CLI
-- Lane-based execution support
+Microkernel implementation with no global locks. Memory management with hardware isolation boundary establishment. Event-driven process scheduling with entropy-based arbitration. Lane creation and management. Lightweight handshake IPC. Basic CLI. Timer event source integration.
 
-### Phase 2: Hardware Support (Months 4-9)
+### Phase 2: Hardware Support Expansion (Months 4 to 9)
 
-- x86_64 support
-- ARM64 support
-- RISC-V support
-- Driver framework
+x86_64 support with optimized initialization. ARM64 support with power-aware initialization. RISC-V support. Hardware isolation boundary verification across architectures. Performance validation.
 
-### Phase 3: Quantum-Like Optimization (Months 7-12)
+### Phase 3: Quantum-Like Optimization (Months 7 to 12)
 
-- Event coordination optimization
-- Parallel pathway support
-- Temporal processing support
-- Performance optimization
+Event coordination optimization for minimal latency. Parallel lane performance optimization. Entropy source quality verification across architectures. Application development tools for lane-based workloads.
 
-### Phase 4: Ecosystem (Months 10-18)
+### Phase 4: Ecosystem Development (Months 10 to 18)
 
-- Development tools
-- Application examples
-- Documentation
-- Community building
+Example quantum-like algorithm implementations. Development tools and analysis frameworks. Documentation. Community building and contribution infrastructure. Research publication support.
 
 ---
 
-## Technical Requirements
+## Conclusion
 
-### Minimum Hardware
+QIOS provides a focused, high-performance operating system for quantum-like classical computation. By implementing HIP's lightweight handshake mode, eliminating security overhead that provides no benefit in the target environment, and centering the lane-based execution model as the primary architectural feature, QIOS achieves performance characteristics not possible in general-purpose systems.
 
-- 64-bit processor
-- 256MB RAM
-- USB boot capability
-- Serial or VGA output
+The quantum-like properties of QIOS—parallel pathway maintenance, interference-free processing, event-driven temporal coordination, entropy-based non-deterministic execution, and application-controlled resolution without collapse—emerge naturally from the elimination of coordination mechanisms rather than from added features or special algorithms.
 
-### Recommended Hardware
-
-- Modern 64-bit processor
-- 1GB+ RAM
-- USB 3.0
-- Serial console
-- SSD storage
-
-### No Hardware Requirements
-
-- TPM
-- Network interface
-- Secure boot support
-- Encryption acceleration
+The combination of QIBIOS and QIOS provides a complete platform for offline, single-user, quantum-like classical computation. The architecture is correct for its threat model, optimal for its target workload, and designed for evolution toward non-binary computing substrates as appropriate hardware becomes available.
 
 ---
-
-## Licensing
-
-**License:** Open source (MIT or Apache 2.0)
-
-**Source Availability:** Complete source code
-
-**Distribution:** Source and binary
-
----
-
-## Community
 
 **Development Status:** Active development
 
-**Contributing:** Contributions welcome
+**License:** Open source (MIT or Apache 2.0)
 
-**Support:**
-- GitHub
-- Development mailing list
-- Community forums
+**Source Availability:** Complete source code published
+
+**Supported Architectures:** x86_64, ARM64, RISC-V RV64GC
+
+**Minimum Hardware:** 64-bit processor, 32MB RAM, bootable storage
+
+**Contributing:** Community contributions welcome
